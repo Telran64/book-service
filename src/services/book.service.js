@@ -152,11 +152,13 @@ export const findBooksByAuthor = async (authorName) => {
 }
 
 export const findBooksByPublisher = async (publisherName) => {
-    const publisher = await publisherRepository.findPublisherById(publisherName);
-    if (!publisher) {
+    if (!await publisherRepository.findPublisherById(publisherName)) {
         throw new Error(`Publisher with name ${publisherName} not found`);
     }
-    return await publisher.getBooks({
+    return await bookRepository.findBooks({
+        where: {
+            publisher: publisherName
+        },
         attributes: {
             exclude: ['createdAt', 'updatedAt']
         },
@@ -172,5 +174,5 @@ export const findBooksByPublisher = async (publisherName) => {
                 ]
             }
         ]
-    });
+    })
 }
