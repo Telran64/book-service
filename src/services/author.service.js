@@ -28,6 +28,10 @@ export const removeAuthor = async (authorName) => {
         if (!author) {
             throw new Error(`Author with name ${authorName} not found`);
         }
+        const books = await author.getBooks({transaction: t});
+        for(const book of books){
+            await book.destroy({transaction: t});
+        }
         await author.destroy({transaction: t});
         await t.commit();
         return author;
