@@ -1,7 +1,8 @@
 import * as bookRepository from '../repositories/book.repository.js';
-import { sequelize } from '../config/database.js';
+import * as authorRepository from '../repositories/author.repository.js';
+import {sequelize} from '../config/database.js';
 
-export const findBookAuthors = async (isbn)  => {
+export const findBookAuthors = async (isbn) => {
     const book = await bookRepository.findBookById(isbn);
     if (!book) {
         throw new Error(`Book with isbn ${isbn} not found`);
@@ -15,5 +16,24 @@ export const findBookAuthors = async (isbn)  => {
 }
 
 export const removeAuthor = async (authorName) => {
-    // TODO: Implement removeAuthor service
+    const t = await sequelize.transaction();
+    try {
+        const author = await authorRepository.findAuthorById(authorName, {
+            transaction: t,
+            attributes: ['name',
+                [sequelize.col('birth_date'), 'birthDate']
+            ],
+            joinTableAttributes: []
+        });
+        if (!author) {
+            throw new Error(`Author with name ${authorName} not found`);
+        }
+        await author.destroy({transaction: t});
+        await t.commit();
+        return author;
+    } catch (e) {
+        await t.rollback();
+        console.log('Error removing author', e);
+        throw e;
+    }
 }
